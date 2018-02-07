@@ -39,6 +39,20 @@ def main(argv):
       for j in range(0,320):              # and convert 255 vals to 0 to match logic in Joystick.c and invertColormap option
          data.append(0 if im_px[j,i] == 255 else 1)
 
+    edges = []
+    for i in range(0, 120):
+        sublist = data[i * 320:(i + 1) * 320 ]
+        indices = [j for j,x in enumerate(sublist) if x == 1]
+        if (len(indices) == 0):
+          edges.append(0)
+          edges.append(319)
+        elif (len(indices) == 1):
+          edges.append(indices[0])
+          edges.append(indices[0])
+        else:
+          edges.append(indices[0])
+          edges.append(indices[-1])
+
     str_out = "#include <stdint.h>\n#include <avr/pgmspace.h>\n\nconst uint8_t image_data[0x12c1] PROGMEM = {"
     for i in range(0, (320*120) / 8):
        val = 0;
@@ -53,7 +67,13 @@ def main(argv):
 
        str_out += hex(val) + ", "         # append hexidecimal bytes
                                           # to the output .c array
-    str_out += "0x0};\n"                  # of bytes
+    str_out += "0x0};\n\n"                # of bytes
+
+    str_out += "const uint32_t edges_data[0xf1] PROGMEM = {"
+    for i in range(0, 240):
+        str_out += str(edges[i]) + ", "
+
+    str_out += "0x0};\n"
 
     with open('image.c', 'w') as f:       # save output into image.c
       f.write(str_out)
